@@ -2,7 +2,7 @@
 
 ![Analytics sample](https://github.com/TritonNews/tritonanalytics/raw/master/sample.PNG)
 
-__tritonanalytics__ is the work of the fledging analytics department of [The Triton](https://triton.news) newspaper.
+__tritonanalytics__ is the work of the fledging analytics department of [The Triton](http://triton.news) newspaper.
 
 It currently contains:
 * A core module that turns exported data from Facebook Analytics into pretty, informative graphs (see top). Currently run manually; once data collection is automated, this will be run as a cron task.
