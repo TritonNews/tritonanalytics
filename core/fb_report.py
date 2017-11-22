@@ -10,8 +10,7 @@ import csv
 import pandas as pd
 import datetime
 import os
-
-IGNORE_HEADING_ROWS = 2
+import math
 
 def main():
   parser = argparse.ArgumentParser(description='Generates an analytics report from Facebook analytics')
@@ -43,11 +42,14 @@ def main():
   p0.renderers.extend(notable_stories)
   p1.renderers.extend(notable_stories)
 
-  show(column(p0, p1))
+
+  p2 = get_geographical_distribution_figure(df)
+
+  show(column(p0, p1, p2))
 
 def get_engagement_figure(source):
   p = figure(
-    plot_width=1200, plot_height=600,
+    plot_width=1300, plot_height=600,
     x_axis_type="datetime",
     x_axis_label="Date", y_axis_label="Count", title="Page Engagement",
     tools="pan,wheel_zoom,box_zoom,reset"
@@ -77,7 +79,7 @@ def get_engagement_figure(source):
 
 def get_likes_figure(source):
   p = figure(
-    plot_width=1200, plot_height=600,
+    plot_width=1300, plot_height=600,
     x_axis_type="datetime",
     x_axis_label="Date", y_axis_label="Count", title="Total Likes",
     tools="pan,wheel_zoom,box_zoom,reset"
@@ -98,6 +100,37 @@ def get_likes_figure(source):
     },
     mode='mouse' # TODO: Figure out why vline is not working
   ))
+
+  return p
+
+def get_geographical_distribution_figure(df):
+
+  column_header = 'Daily City: People Talking About This - '
+  unwanted_cols = [col for col in df.columns if column_header not in col]
+  df = df[df.columns.drop(unwanted_cols)]
+  geographic_cols = [col.replace(column_header, '') for col in df.columns]
+  geographic_values = []
+  for col in df.columns:
+    s = 0
+    for xd in df[col]:
+      try:
+        x = float(xd)
+      except ValueError:
+        continue
+      s += x if not math.isnan(x) else 0
+    geographic_values.append(s)
+
+  geographic_tuples = list(zip(geographic_cols, geographic_values))
+  geographic_tuples.sort(key=lambda x : x[1], reverse=True)
+
+  geographic_cols, geographic_values = zip(*geographic_tuples[0:10])
+
+  p = figure(
+    x_range=geographic_cols,
+    plot_width=1300, plot_height=600,
+    x_axis_label="Cities", y_axis_label="Count", title="Reader Locations"
+  )
+  p.vbar(x=geographic_cols, top=geographic_values, width=0.8)
 
   return p
 
