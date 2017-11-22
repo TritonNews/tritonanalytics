@@ -17,7 +17,7 @@ def main():
   parser.add_argument('filename', help='Facebook data exported in CSV format')
   args = parser.parse_args()
 
-  filename_no_extension = args.filename.replace('data\\', '').replace('.csv', '')
+  filename_no_extension = os.path.basename(args.filename).replace('.csv', '')
 
   df = pd.read_csv(args.filename)
   df.drop(df.index[0])
@@ -26,7 +26,11 @@ def main():
 
   source = ColumnDataSource(df)
 
-  html_path = os.path.join((Path(__file__) / ".." / "..").resolve(), 'graphs', '{0}.html'.format(filename_no_extension))
+  graphs_path = os.path.join((Path(__file__) / ".." / "..").resolve(), 'graphs')
+  if not os.path.exists(graphs_path):
+    os.makedirs(graphs_path)
+
+  html_path = os.path.join(graphs_path, '{0}.html'.format(filename_no_extension))
   output_file(html_path)
 
   p0 = get_engagement_figure(source)
