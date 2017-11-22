@@ -1,7 +1,8 @@
 
 from bokeh.plotting import figure, output_file, show
-from bokeh.models import HoverTool, ColumnDataSource, Span
+from bokeh.models import HoverTool, ColumnDataSource, Span, FuncTickFormatter
 from bokeh.layouts import column
+from bokeh.transform import dodge
 
 from pathlib import Path
 
@@ -37,19 +38,23 @@ def main():
   html_outfile = os.path.join((Path(__file__) / ".." / "..").resolve(), 'graphs', '{0}.html'.format(html_outfile_name))
   generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile)
 
-def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
-
+def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
   # Create our page analytics dataframe
   df_page = pd.read_csv(csv_page_infile)
-  df_page.drop(df_page.index[0])
+  df_page = df_page.drop(df_page.index[0])
   df_page['Date'] = pd.to_datetime(df_page['Date'])
   df_page = df_page.sort_values(by='Date')
 
   # Create our posts analytics dataframe
   df_posts = pd.read_csv(csv_post_infile)
-  df_posts.drop(df_posts.index[0])
+  df_posts = df_posts.drop(df_posts.index[0])
+
+  return df_page, df_posts
+
+def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
 
   # Generate column sources from the dataframes
+  df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
   source_page = ColumnDataSource(df_page)
   source_posts = ColumnDataSource(df_posts)
 
@@ -131,19 +136,18 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
 
   def get_geographical_distribution_figure(df_page):
 
-    # Get a list of keys to values (keys being cities, values being number of users per city)
+    # Reduce columns of the dataframe down to geographics
     column_header = 'Daily City: People Talking About This - '
     unwanted_cols = [col for col in df_page.columns if column_header not in col]
     df_page = df_page[df_page.columns.drop(unwanted_cols)]
+
+    # Get a list of keys to values (keys being cities, values being number of users per city)
     geographic_cols = [col.replace(column_header, '') for col in df_page.columns]
     geographic_values = []
     for col in df_page.columns:
       s = 0
       for xd in df_page[col]:
-        try:
-          x = float(xd)
-        except ValueError:
-          continue
+        x = float(xd)
         s += x if not math.isnan(x) else 0
       geographic_values.append(s)
 
@@ -158,7 +162,23 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
       plot_width=1300, plot_height=600,
       x_axis_label="Cities", y_axis_label="Count", title="Reader Locations"
     )
+
+    # Add demographics
     p.vbar(x=geographic_cols, top=geographic_values, width=0.8)
+
+    p.add_tools(HoverTool(
+      tooltips=[
+        ('City', '@x'),
+        ('Readers', '$y{int}') # TODO: Show bar height and not y of cursor
+      ],
+      formatters={
+        'Posted': 'datetime'
+      },
+      mode='vline'
+    ))
+
+    # No vertical grid lines
+    p.xgrid.grid_line_color = None
 
     return p
 
@@ -184,18 +204,11 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
   show(column(p0, p1, p2))
 
 def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile):
-  # Create our page analytics dataframe
-  df_page = pd.read_csv(csv_page_infile)
-  df_page.drop(df_page.index[0])
-  df_page['Date'] = pd.to_datetime(df_page['Date'])
-  df_page = df_page.sort_values(by='Date')
-
-  # Create our posts analytics dataframe
-  df_posts = pd.read_csv(csv_post_infile)
-  df_posts.drop(df_posts.index[0])
 
   # Generate column sources from the dataframes
+  df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
   source_page = ColumnDataSource(df_page)
+  source_posts = ColumnDataSource(df_posts)
 
   # Recursively create directories up to the outfile if they do not exist already
   if not os.path.exists(os.path.dirname(html_outfile)):
@@ -209,9 +222,73 @@ def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile):
   output_file(html_outfile)
 
   def get_favorite_posts_figure(df_posts):
-    pass
 
-  # TODO: Add figures
+    # Dataframe manipulation
+    df_posts['Posted'] = pd.to_datetime(df_posts['Posted'])
+    df_posts['Lifetime Post Total Reach'] = df_posts['Lifetime Post Total Reach'].apply(pd.to_numeric, errors='ignore')
+    df_posts = df_posts.nlargest(5, 'Lifetime Post Total Reach')
+    source_posts = ColumnDataSource(df_posts)
+
+    post_messages = df_posts['Post Message'].tolist()
+
+    # Create our figure
+    p = figure(
+      x_range=post_messages,
+      plot_width=1300, plot_height=600,
+      title="Favorite Posts",
+    )
+
+    # For each post, show total reach
+    p.vbar(
+      x=dodge('Post Message', -0.3, range=p.x_range), width=0.1,
+      top='Lifetime Post Total Reach', source=source_posts,
+      color="#1b9e77", legend="unique visitors"
+    )
+
+    # For each post, show engaged users
+    p.vbar(
+      x=dodge('Post Message', -0.1, range=p.x_range), width=0.1,
+      top='Lifetime Engaged Users', source=source_posts,
+      color="#99d8c9", legend="likes/comments/shares"
+    )
+
+    # For each post, show consumers
+    p.vbar(
+      x=dodge('Post Message', 0.1, range=p.x_range), width=0.1,
+      top='Lifetime Post Consumers', source=source_posts,
+      color="#d95f02", legend="unique clicks"
+    )
+
+    # For each post, show consumptions
+    p.vbar(
+      x=dodge('Post Message', 0.3, range=p.x_range), width=0.1,
+      top='Lifetime Post Consumptions', source=source_posts,
+      color="#fdbb84", legend="total clicks"
+    )
+
+    # Add hover tool
+    p.add_tools(HoverTool(
+      tooltips=[
+        ('Title', '@{Post Message}'),
+        ('Date', '@Posted{%F %T}')
+      ],
+      formatters={
+        'Posted': 'datetime'
+      },
+      mode='vline'
+    ))
+
+    # No vertical grid lines & format ticks so whole text is not displaying
+    p.xgrid.grid_line_color = None
+    p.xaxis.formatter = FuncTickFormatter(code="""
+        return tick.split(' ').slice(0,7).join(' ') + '...'
+    """)
+
+    return p
+
+  p0 = get_favorite_posts_figure(df_posts)
+
+  show(p0)
 
 if __name__ == '__main__':
   main()
