@@ -4,8 +4,6 @@ from bokeh.models import HoverTool, ColumnDataSource, Span, FuncTickFormatter
 from bokeh.layouts import column
 from bokeh.transform import dodge
 
-from pathlib import Path
-
 import argparse
 import csv
 import pandas as pd
@@ -26,16 +24,16 @@ def main():
   csv_page_infile = args.csv_page_infile
   csv_post_infile = args.csv_post_infile
 
-  # Generate page analytics in ../../graphs/{CSV_PAGE_ANALYTICS_INFILE}.html
+  # Generate page analytics in graphs/{CSV_PAGE_ANALYTICS_INFILE}.html
   logging.info('Generating page analytics ...')
   html_outfile_name = os.path.basename(csv_page_infile).replace('.csv', '')
-  html_outfile = os.path.join((Path(__file__) / ".." / "..").resolve(), 'graphs', '{0}.html'.format(html_outfile_name))
+  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
   generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile)
 
-  # Generate post analytics in ../../graphs/{CSV_POST_ANALYTICS_INFILE}.html
+  # Generate post analytics in graphs/{CSV_POST_ANALYTICS_INFILE}.html
   logging.info('Generating post analytics ...')
   html_outfile_name = os.path.basename(csv_post_infile).replace('.csv', '')
-  html_outfile = os.path.join((Path(__file__) / ".." / "..").resolve(), 'graphs', '{0}.html'.format(html_outfile_name))
+  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
   generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile)
 
 def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
