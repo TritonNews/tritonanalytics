@@ -1,5 +1,5 @@
 
-from bokeh.plotting import figure, output_file, show
+from bokeh.plotting import figure, output_file, show, save
 from bokeh.models import HoverTool, ColumnDataSource, Span, FuncTickFormatter
 from bokeh.layouts import column
 from bokeh.transform import dodge
@@ -11,6 +11,12 @@ import datetime
 import os
 import math
 import logging
+
+"""
+TODO:
+  - Clean up code -> eliminate first two rows on each dataframe immediately rather than in nested methods
+  - Add documentation
+"""
 
 def main():
 
@@ -28,13 +34,13 @@ def main():
   logging.info('Generating page analytics ...')
   html_outfile_name = os.path.basename(csv_page_infile).replace('.csv', '')
   html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile)
+  generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
 
   # Generate post analytics in graphs/{CSV_POST_ANALYTICS_INFILE}.html
   logging.info('Generating post analytics ...')
   html_outfile_name = os.path.basename(csv_post_infile).replace('.csv', '')
   html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile)
+  generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
 
 def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
   # Create our page analytics dataframe
@@ -49,7 +55,7 @@ def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
 
   return df_page, df_posts
 
-def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
+def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=False):
 
   # Generate column sources from the dataframes
   df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
@@ -199,9 +205,12 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile):
   p2 = get_geographical_distribution_figure(df_page)
 
   # Show all charts vertically displaced from each other
-  show(column(p0, p1, p2))
+  if show_in_browser:
+    show(column(p0, p1, p2))
+  else:
+    save(column(p0, p1, p2))
 
-def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile):
+def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=False):
 
   # Generate column sources from the dataframes
   df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
@@ -286,7 +295,10 @@ def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile):
 
   p0 = get_favorite_posts_figure(df_posts)
 
-  show(p0)
+  if show_in_browser:
+    show(p0)
+  else:
+    save(p0)
 
 if __name__ == '__main__':
   main()
