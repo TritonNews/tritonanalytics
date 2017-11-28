@@ -14,7 +14,6 @@ import logging
 
 """
 TODO:
-  - Clean up code -> eliminate first two rows on each dataframe immediately rather than in nested methods
   - Add documentation
 """
 
@@ -45,13 +44,13 @@ def main():
 def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
   # Create our page analytics dataframe
   df_page = pd.read_csv(csv_page_infile)
-  df_page = df_page.drop(df_page.index[0])
+  df_page = df_page.drop(df_page.index[[0, 1]])
   df_page['Date'] = pd.to_datetime(df_page['Date'])
   df_page = df_page.sort_values(by='Date')
 
   # Create our posts analytics dataframe
   df_posts = pd.read_csv(csv_post_infile)
-  df_posts = df_posts.drop(df_posts.index[0])
+  df_posts = df_posts.drop(df_posts.index[[0, 1]])
 
   return df_page, df_posts
 
@@ -145,20 +144,15 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     unwanted_cols = [col for col in df_page.columns if column_header not in col]
     df_page = df_page[df_page.columns.drop(unwanted_cols)]
 
-    # Get a list of keys to values (keys being cities, values being number of users per city)
-    geographic_cols = [col.replace(column_header, '') for col in df_page.columns]
-    geographic_values = []
-    for col in df_page.columns:
-      s = 0
-      for xd in df_page[col]:
-        x = float(xd)
-        s += x if not math.isnan(x) else 0
-      geographic_values.append(s)
+    # Switch columns with rows in DataFrame, reduce to top 10 cities
+    series_page = df_page.sum()
+    df_page = pd.DataFrame({'City': series_page.index, 'Readers': series_page.values})
+    df_page = df_page.nlargest(10, 'Readers')
+    df_page['City'] = df_page['City'].replace({row:row.replace(column_header, '') for row in df_page['City']})
+    source_page = ColumnDataSource(df_page)
 
-    # Zip up keys and values, sort, get the top 10 and then unpack
-    geographic_tuples = list(zip(geographic_cols, geographic_values))
-    geographic_tuples.sort(key=lambda x : x[1], reverse=True)
-    geographic_cols, geographic_values = zip(*geographic_tuples[0:10])
+    # Prune out columns
+    geographic_cols = df_page['City'].tolist()
 
     # Create our figure
     p = figure(
@@ -168,12 +162,13 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     )
 
     # Add demographics
-    p.vbar(x=geographic_cols, top=geographic_values, width=0.8)
+    p.vbar(x='City', top='Readers', source=source_page, width=0.8)
 
+    # Add hover tool
     p.add_tools(HoverTool(
       tooltips=[
-        ('City', '@x'),
-        ('Readers', '$y{int}') # TODO: Show bar height and not y of cursor
+        ('City', '@City'),
+        ('Readers', '@Readers')
       ],
       formatters={
         'Posted': 'datetime'
