@@ -1,0 +1,65 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>The Triton</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Analytics compiled for The Triton newspaper">
+  <meta name="author" content="David Hacker">
+
+  <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+  <link rel="stylesheet" href="/static/css/site.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="section header">
+      <div class="container">
+        <div class="row">
+          <h1 class="header-title"><b>The Triton</b> Graphical Data</h1>
+        </div>
+        <div class="row">
+          <a href="/"><img src="/static/img/thetriton.png" class="header-image center-image"></a>
+        </div>
+      </div>
+    </div>
+    <div class="section graphs">
+      <div class="container">
+        <div class="row">
+          <div class="six columns">
+            <h3>Facebook Page Graphs</h3>
+            <p>Information about The Triton Facebook page. Includes plots of reach, likes, demographics, etc.</p>
+            <a class="button button-primary" href="/graphs/page/current">Most Recent Analytics</a>
+            <p>&nbsp;</p>
+            <h4>Records</h4>
+            <ul>
+            {% for item in page_records %}
+              <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+            {% endfor %}
+            </ul>
+          </div>
+          <div class="six columns">
+            <h3>Article Graphs</h3>
+            <p>Information about selected articles. All article data is garnered from Facebook traffic.</p>
+            <a class="button button-primary" href="/graphs/posts/current">Most Recent Analytics</a>
+            <p>&nbsp;</p>
+            <h4>Records</h4>
+            <ul>
+            {% for item in posts_records %}
+              <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+            {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section footer">
+      <p>Copyright © 2017 The Triton</p>
+    </div>
+  </div>
+</body>
+</html>

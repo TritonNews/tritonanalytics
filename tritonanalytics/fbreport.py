@@ -190,6 +190,7 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
   p0 = get_engagement_figure()
   p1 = get_likes_figure()
 
+  '''
   # Add vertical spans to denote stories/dates of interest
   notable_stories = [
     Span(
@@ -200,6 +201,7 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
   ]
   p0.renderers.extend(notable_stories)
   p1.renderers.extend(notable_stories)
+  '''
 
   # Create a geographical distribution bar chart below line graphs
   p2 = get_geographical_distribution_figure(df_page)

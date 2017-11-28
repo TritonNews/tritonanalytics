@@ -1,0 +1,28 @@
+
+.section {
+  padding-top: 96px;
+}
+
+.header-title {
+  text-align: center;
+}
+
+.center-image {
+  display: block;
+  margin: 0 auto;
+}
+
+.header-image {
+  width: 64px;
+  max-height: auto;
+}
+
+.graphs-image {
+  width: 100%;
+  max-height: auto;
+}
+
+.footer {
+  text-align: center;
+  font-size: 11px;
+}
