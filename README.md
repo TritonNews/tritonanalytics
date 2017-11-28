@@ -1,6 +1,6 @@
 # tritonanalytics
 
-![Analytics sample](https://github.com/TritonNews/tritonanalytics/raw/master/sample.PNG)
+![Analytics sample](https://github.com/TritonNews/tritonanalytics/blob/master/tritonanalytics/static/img/sample_graph.png)
 
 __tritonanalytics__ is the work of the fledging analytics department of [The Triton](http://triton.news) newspaper.
 
