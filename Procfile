@@ -1,1 +1,1 @@
-web: gunicorn app:tritonanalytics
+web: gunicorn tritonanalytics:app
