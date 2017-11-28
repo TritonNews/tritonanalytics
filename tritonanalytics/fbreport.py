@@ -17,30 +17,6 @@ TODO:
   - Add documentation
 """
 
-def main():
-
-  # Setup argument parser
-  parser = argparse.ArgumentParser(description='Generates an analytics report from Facebook analytics')
-  parser.add_argument('csv_page_infile', help='Facebook page data exported in CSV format')
-  parser.add_argument('csv_post_infile', help='Facebook posts data exported in CSV format')
-  args = parser.parse_args()
-
-  # Get arguments
-  csv_page_infile = args.csv_page_infile
-  csv_post_infile = args.csv_post_infile
-
-  # Generate page analytics in graphs/{CSV_PAGE_ANALYTICS_INFILE}.html
-  logging.info('Generating page analytics ...')
-  html_outfile_name = os.path.basename(csv_page_infile).replace('.csv', '')
-  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
-
-  # Generate post analytics in graphs/{CSV_POST_ANALYTICS_INFILE}.html
-  logging.info('Generating post analytics ...')
-  html_outfile_name = os.path.basename(csv_post_infile).replace('.csv', '')
-  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
-
 def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
   # Create our page analytics dataframe
   df_page = pd.read_csv(csv_page_infile)
@@ -306,6 +282,30 @@ def _disable_jinja2(html_outfile):
     f.write('{% raw %}')
     f.write(raw_html)
     f.write('\n{% endraw %}')
+
+def main():
+
+  # Setup argument parser
+  parser = argparse.ArgumentParser(description='Generates an analytics report from Facebook analytics')
+  parser.add_argument('csv_page_infile', help='Facebook page data exported in CSV format')
+  parser.add_argument('csv_post_infile', help='Facebook posts data exported in CSV format')
+  args = parser.parse_args()
+
+  # Get arguments
+  csv_page_infile = args.csv_page_infile
+  csv_post_infile = args.csv_post_infile
+
+  # Generate page analytics in graphs/{CSV_PAGE_ANALYTICS_INFILE}.html
+  logging.info('Generating page analytics ...')
+  html_outfile_name = os.path.basename(csv_page_infile).replace('.csv', '')
+  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
+  generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
+
+  # Generate post analytics in graphs/{CSV_POST_ANALYTICS_INFILE}.html
+  logging.info('Generating post analytics ...')
+  html_outfile_name = os.path.basename(csv_post_infile).replace('.csv', '')
+  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
+  generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
 
 if __name__ == '__main__':
   main()
