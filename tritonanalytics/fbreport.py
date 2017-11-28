@@ -209,6 +209,7 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     show(column(p0, p1, p2))
   else:
     save(column(p0, p1, p2))
+    _disable_jinja2(html_outfile)
 
 def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=False):
 
@@ -299,6 +300,15 @@ def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     show(p0)
   else:
     save(p0)
+    _disable_jinja2(html_outfile)
+
+def _disable_jinja2(html_outfile):
+  with open(html_outfile, 'r') as f:
+    raw_html = f.read()
+  with open(html_outfile, 'w') as f:
+    f.write('{% raw %}')
+    f.write(raw_html)
+    f.write('\n{% endraw %}')
 
 if __name__ == '__main__':
   main()

@@ -1,5 +1,6 @@
 # Triton Analytics
 tritonanalytics/graphs
+tritonanalytics/templates/graphs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
