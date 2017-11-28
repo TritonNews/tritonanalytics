@@ -1,8 +1,10 @@
 # tritonanalytics
 
-![Analytics sample](https://github.com/TritonNews/tritonanalytics/blob/master/tritonanalytics/static/img/sample_graph.png)
+![Analytics sample](https://github.com/TritonNews/tritonanalytics/blob/master/tritonanalytics/static/img/graph.png)
 
 __tritonanalytics__ is the work of the fledging analytics department of [The Triton](http://triton.news) newspaper.
+
+_Now live at_ https://tritonanalytics.herokuapp.com
 
 It currently contains:
 * A core module that turns exported data from Facebook Analytics into pretty, informative graphs (see top). Currently run manually; once data collection is automated, this will be run as a cron task.
