@@ -8,14 +8,24 @@ from tritonanalytics.views import main, graphs
 from tritonanalytics.constants import *
 
 import logging
+import glob
+import os
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',level=logging.INFO)
 logging.info("Logging initialized ... ✓")
 
 # Setup page analytics
-generate_page_analytics(FB_PAGE_ANALYTICS_INFILE, FB_POST_ANALYTICS_INFILE, FB_PAGE_ANALYTICS_OUTFILE)
-generate_post_analytics(FB_PAGE_ANALYTICS_INFILE, FB_POST_ANALYTICS_INFILE, FB_POST_ANALYTICS_OUTFILE)
+for infile_page in glob.glob(os.path.join(DATA_INFOLDER, '*')):
+  infilename_page = os.path.basename(infile_page)
+  if 'page' not in infilename_page:
+    continue
+  infile_posts = infile_page.replace('page-', 'posts-')
+  outfilename = infilename_page.replace('page-', '').replace('.csv', '.html')
+  outfile_page = os.path.join(GRAPHS_OUTFOLDER, 'page', outfilename)
+  outfile_posts = os.path.join(GRAPHS_OUTFOLDER, 'posts', outfilename)
+  generate_page_analytics(infile_page, infile_posts, outfile_page)
+  generate_post_analytics(infile_page, infile_posts, outfile_posts)
 logging.info("Page & post analytics generated ... ✓")
 
 # Start the web server
