@@ -30,29 +30,17 @@
     <div class="section graphs">
       <div class="container">
         <div class="row">
-          <div class="six columns">
+          <div class="twelve columns">
             <h3>Facebook Page Graphs</h3>
             <p>Information about The Triton Facebook page. Includes plots of reach, likes, demographics, etc.</p>
-            <a class="button button-primary" href="/graphs/page/current">Most Recent Analytics</a>
-            <p>&nbsp;</p>
-            <h4>Records</h4>
-            <ul>
-            {% for item in page_records %}
-              <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
-            {% endfor %}
-            </ul>
+            <a class="button button-primary" href="/graphs/page/current">View Analytics</a>
           </div>
-          <div class="six columns">
+        </div>
+        <div class="row">
+          <div class="twelve columns">
             <h3>Article Graphs</h3>
             <p>Information about selected articles. All article data is garnered from Facebook traffic.</p>
-            <a class="button button-primary" href="/graphs/posts/current">Most Recent Analytics</a>
-            <p>&nbsp;</p>
-            <h4>Records</h4>
-            <ul>
-            {% for item in posts_records %}
-              <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
-            {% endfor %}
-            </ul>
+            <a class="button button-primary" href="/graphs/posts/current">View Analytics</a>
           </div>
         </div>
       </div>
