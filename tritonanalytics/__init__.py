@@ -22,9 +22,10 @@ db = MongoClient(db_uri).get_database("tritonanalytics")
 logging.info("Database login successful ... ✓")
 
 # Generate analytic HTML files
-generate_page_analytics(db, os.path.join(GRAPHS_OUTFOLDER, 'pages.html'))
-generate_post_analytics(db, os.path.join(GRAPHS_OUTFOLDER, 'posts.html'))
-logging.info("Page & post analytics generated ... ✓")
+generate_page_analytics(db, PAGE_ANALYTICS_OUTFILE)
+logging.info("Page analytics generated ... ✓")
+generate_post_analytics(db, POST_ANALYTICS_OUTFILE)
+logging.info("Post analytics generated ... ✓")
 
 # Start the web server
 app = Flask(__name__)

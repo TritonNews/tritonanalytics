@@ -1,4 +1,6 @@
 
+from tritonanalytics.constants import *
+
 from flask import Blueprint, render_template, abort
 from jinja2.exceptions import TemplateNotFound
 
@@ -19,8 +21,8 @@ def graphs_landing_page():
 
 @graphs.route('/pages')
 def graphs_page_analytics():
-  return render_template('graphs/pages.html')
+  return render_template(PAGE_ANALYTICS_OUTPATH)
 
 @graphs.route('/posts')
 def graphs_posts_analytics():
-  return render_template('graphs/posts.html')
+  return render_template(POST_ANALYTICS_OUTPATH)
