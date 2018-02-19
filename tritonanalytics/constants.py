@@ -7,4 +7,4 @@ PAGE_ANALYTICS_OUTFILE = os.path.join(GRAPHS_OUTFOLDER, 'pages.html')
 PAGE_ANALYTICS_OUTPATH = 'graphs/pages.html'
 
 POST_ANALYTICS_OUTFILE = os.path.join(GRAPHS_OUTFOLDER, 'posts.html')
-POST_ANALYTICS_OUTPATH = 'graph/posts.html'
+POST_ANALYTICS_OUTPATH = 'graphs/posts.html'
