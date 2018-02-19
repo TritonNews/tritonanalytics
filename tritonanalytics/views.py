@@ -18,9 +18,9 @@ def graphs_landing_page():
   return render_template('graphs.html')
 
 @graphs.route('/pages')
-def graphs_page_analytics(analytics_id):
+def graphs_page_analytics():
   return render_template('graphs/pages.html')
 
 @graphs.route('/posts')
-def graphs_posts_analytics(analytics_id):
+def graphs_posts_analytics():
   return render_template('graphs/posts.html')
