@@ -4,6 +4,10 @@ from bokeh.models import HoverTool, ColumnDataSource, Span, FuncTickFormatter
 from bokeh.layouts import column
 from bokeh.transform import dodge
 
+from pymongo import MongoClient
+
+from collections import defaultdict
+
 import argparse
 import csv
 import pandas as pd
@@ -11,29 +15,97 @@ import datetime
 import os
 import math
 import logging
+import time
 
-"""
-TODO:
-  - Add documentation
-"""
+# Only copy over certain columns from database to dataframe
+selected_columns = {
+  'Date',
+  'Daily Page Engaged Users',
+  'Daily Total Impressions',
+  'Daily Organic Reach',
+  'Daily Viral Reach',
+  'Daily Total Reach',
+  'Lifetime Total Likes',
+  'Posted',
+  'Post Message',
+  'Lifetime Post Total Reach',
+  'Lifetime Engaged Users',
+  'Lifetime Post Consumers',
+  'Lifetime Post Consumptions'
+}
+selected_columns_updated = False
 
-def _get_dataframes_from_csv(csv_page_infile, csv_post_infile):
-  # Create our page analytics dataframe
-  df_page = pd.read_csv(csv_page_infile)
-  df_page = df_page.drop(df_page.index[[0, 1]])
+# Cache used for storing dataframes
+df_cache = {}
+
+
+
+def generate_dataframes(db, force_update=False):
+  global selected_columns, selected_columns_updated
+
+  # Get a list of cities and add them to our selected columns
+  if not selected_columns_updated:
+    selected_columns.update(_get_list_of_cities(db))
+    selected_columns_updated = True
+
+  # Retrieve our page analytics dataframe
+  df_page = _get_dataframe(db, 'fbpages', force_update)
   df_page['Date'] = pd.to_datetime(df_page['Date'])
   df_page = df_page.sort_values(by='Date')
 
-  # Create our posts analytics dataframe
-  df_posts = pd.read_csv(csv_post_infile)
-  df_posts = df_posts.drop(df_posts.index[[0, 1]])
+  # Retrieve our posts analytics dataframe
+  df_posts = _get_dataframe(db, 'fbposts', force_update)
 
   return df_page, df_posts
 
-def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=False):
 
+
+def _get_list_of_cities(db):
+  # Used to get a list of cities appearing in every document, since our data may be incomplete
+  # TODO: replace with a more elegant solution
+  cities = defaultdict(int)
+  num_docs = 0
+  for doc in db.fbpages.find():
+    for column, value in doc.items():
+      if 'Daily City: People Talking About This - ' in column:
+        cities[column] += 1
+    num_docs += 1
+  # A city appearing in every document must have a count equal to the number of documents
+  return {city for city, appearances in cities.items() if appearances == num_docs}
+
+
+
+def _get_dataframe(db, coll_name, force_update):
+  global df_cache
+
+  # Dataframe is already present in the cache (force updating is off)
+  if not force_update and coll_name in df_cache:
+    return df_cache[coll_name]
+
+  # Either we got a cache miss or updates are being forced
+  coll = db[coll_name]
+
+  # Convert MongoDB documents to tabular data
+  data = {}
+  for doc in coll.find():
+    for column, value in doc.items():
+      if column in selected_columns:
+        if column in data:
+          data[column].append(value)
+        else:
+          data[column] = [value]
+
+  # Cache the new dataframe
+  df = pd.DataFrame(data=data)
+  df_cache[coll_name] = df
+
+  return df
+
+
+
+def generate_page_analytics(db, html_outfile, show_in_browser=False):
   # Generate column sources from the dataframes
-  df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
+  df_page, df_posts = generate_dataframes(db)
   source_page = ColumnDataSource(df_page)
   source_posts = ColumnDataSource(df_posts)
 
@@ -48,8 +120,9 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
   # Set our output file
   output_file(html_outfile)
 
-  def get_engagement_figure():
+  #############################################################################
 
+  def get_engagement_figure():
     # Create our figure
     p = figure(
       plot_width=1300, plot_height=600,
@@ -83,8 +156,9 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
 
     return p
 
-  def get_likes_figure():
+  #############################################################################
 
+  def get_likes_figure():
     # Create our figure
     p = figure(
       plot_width=1300, plot_height=600,
@@ -112,6 +186,8 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     ))
 
     return p
+
+  #############################################################################
 
   def get_geographical_distribution_figure(df_page):
 
@@ -157,6 +233,8 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
 
     return p
 
+  #############################################################################
+
   # Create our engagement and likes line graphs
   p0 = get_engagement_figure()
   p1 = get_likes_figure()
@@ -184,10 +262,11 @@ def generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show
     save(column(p0, p1, p2))
     _disable_jinja2(html_outfile)
 
-def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=False):
 
+
+def generate_post_analytics(db, html_outfile, show_in_browser=False):
   # Generate column sources from the dataframes
-  df_page, df_posts = _get_dataframes_from_csv(csv_page_infile, csv_post_infile)
+  df_page, df_posts = generate_dataframes(db)
   source_page = ColumnDataSource(df_page)
   source_posts = ColumnDataSource(df_posts)
 
@@ -202,8 +281,9 @@ def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show
   # Set our output file
   output_file(html_outfile)
 
-  def get_favorite_posts_figure(df_posts):
+  #############################################################################
 
+  def get_favorite_posts_figure(df_posts):
     # Dataframe manipulation
     df_posts['Posted'] = pd.to_datetime(df_posts['Posted'])
     df_posts['Lifetime Post Total Reach'] = df_posts['Lifetime Post Total Reach'].apply(pd.to_numeric, errors='ignore')
@@ -267,6 +347,8 @@ def generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show
 
     return p
 
+  #############################################################################
+
   p0 = get_favorite_posts_figure(df_posts)
 
   if show_in_browser:
@@ -284,28 +366,29 @@ def _disable_jinja2(html_outfile):
     f.write('\n{% endraw %}')
 
 def main():
-
   # Setup argument parser
   parser = argparse.ArgumentParser(description='Generates an analytics report from Facebook analytics')
-  parser.add_argument('csv_page_infile', help='Facebook page data exported in CSV format')
-  parser.add_argument('csv_post_infile', help='Facebook posts data exported in CSV format')
+  parser.add_argument('db', help='URI of MongoDB used to hold analytics data')
   args = parser.parse_args()
 
-  # Get arguments
-  csv_page_infile = args.csv_page_infile
-  csv_post_infile = args.csv_post_infile
+  # Setup logging
+  logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',level=logging.INFO)
 
-  # Generate page analytics in graphs/{CSV_PAGE_ANALYTICS_INFILE}.html
+  # Login to database
+  logging.info("Logging into database ...")
+  db = MongoClient(args.db).get_database("tritonanalytics")
+
+  # Generate page analytics in graphs/pages.html
   logging.info('Generating page analytics ...')
-  html_outfile_name = os.path.basename(csv_page_infile).replace('.csv', '')
-  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_page_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
+  start_time = time.time()
+  generate_page_analytics(db, os.path.join('graphs', 'pages.html'), show_in_browser=True)
+  logging.info('Took {0:.2f} seconds.'.format(time.time() - start_time))
 
-  # Generate post analytics in graphs/{CSV_POST_ANALYTICS_INFILE}.html
+  # Generate post analytics in graphs/posts.html
   logging.info('Generating post analytics ...')
-  html_outfile_name = os.path.basename(csv_post_infile).replace('.csv', '')
-  html_outfile = os.path.join('graphs', '{0}.html'.format(html_outfile_name))
-  generate_post_analytics(csv_page_infile, csv_post_infile, html_outfile, show_in_browser=True)
+  start_time = time.time()
+  generate_post_analytics(db, os.path.join('graphs', 'posts.html'), show_in_browser=True)
+  logging.info('Took {0:.2f} seconds.'.format(time.time() - start_time))
 
 if __name__ == '__main__':
   main()

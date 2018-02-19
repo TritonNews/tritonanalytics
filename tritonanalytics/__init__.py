@@ -7,31 +7,23 @@ from tritonanalytics.fbreport import generate_page_analytics, generate_post_anal
 from tritonanalytics.views import main, graphs
 from tritonanalytics.constants import *
 
+from pymongo import MongoClient
+
 import logging
-import glob
 import os
 
 # Setup logging
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',level=logging.INFO)
 logging.info("Logging initialized ... ✓")
 
-# Setup page analytics
-infiles = [fn for fn in glob.glob(os.path.join(DATA_INFOLDER, '*')) if 'page' in fn]
-sorted_infiles = sorted(infiles, key=os.path.getctime)
-for infile_page in sorted_infiles:
+# Login to database
+db_uri = os.environ.get("TRITON_ANALYTICS_MONGODB")
+db = MongoClient(db_uri).get_database("tritonanalytics")
+logging.info("Database login successful ... ✓")
 
-  # Isolate basename & determine corresponding posts infile
-  infilename_page = os.path.basename(infile_page)
-  infile_posts = infile_page.replace('page-', 'posts-')
-
-  # Determine outfile basename & determine output file destinations
-  outfilename = infilename_page.replace('page-', '').replace('.csv', '.html')
-  outfile_page = os.path.join(GRAPHS_OUTFOLDER, 'page', outfilename)
-  outfile_posts = os.path.join(GRAPHS_OUTFOLDER, 'posts', outfilename)
-
-  # Generate analytics
-  generate_page_analytics(infile_page, infile_posts, outfile_page)
-  generate_post_analytics(infile_page, infile_posts, outfile_posts)
+# Generate analytic HTML files
+generate_page_analytics(db, os.path.join(GRAPHS_OUTFOLDER, 'pages.html'))
+generate_post_analytics(db, os.path.join(GRAPHS_OUTFOLDER, 'posts.html'))
 logging.info("Page & post analytics generated ... ✓")
 
 # Start the web server
