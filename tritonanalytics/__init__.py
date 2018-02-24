@@ -13,6 +13,9 @@ import time
 import logging
 import os
 
+# Amount of time to delay between force refreshes of the database
+UPDATE_DELAY_SECONDS = 3600 # Every hour
+
 # Setup logging
 logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s',level=logging.INFO)
 logging.info("Logging initialized ... ✓")
@@ -24,9 +27,16 @@ logging.info("Database login successful ... ✓")
 
 # Pull information from the database occasionally
 def update_analytics(db):
+  logging.info("Forcing update of dataframes ...")
+
+  start_time = time.time()
   generate_dataframes(db, force_update=True)
-  sleep(2000) # Little over half an hour
+  logging.info("Force update took {0:.2f}s.".format(time.time() - start_time))
+
+  sleep(UPDATE_DELAY_SECONDS)
   update_analytics(db)
+
+# Start thread that updates dataframes
 Thread(target=update_analytics, args=(db,))
 logging.info("Database updater started ... ✓")
 
