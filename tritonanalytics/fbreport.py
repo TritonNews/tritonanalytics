@@ -35,7 +35,7 @@ selected_columns = [
   'Lifetime Post Consumptions'
   'Daily City: People Talking About This - '
 ]
-selected_column_regex = None
+selected_columns_regex = None
 
 # Cache used for storing dataframes
 df_cache = {}
@@ -43,11 +43,11 @@ df_cache = {}
 
 
 def generate_dataframes(db, force_update=False):
-  global selected_columns, selected_columns_updated
+  global selected_columns, selected_columns_regex
 
   # Get a list of cities and add them to our selected columns
-  if not selected_column_regex:
-    selected_column_regex = '|'.join(selected_columns)
+  if not selected_columns_regex:
+    selected_columns_regex = '|'.join(selected_columns)
 
   # Retrieve our page analytics dataframe
   df_page = _get_dataframe(db, 'fbpages', force_update)
@@ -62,7 +62,7 @@ def generate_dataframes(db, force_update=False):
 
 
 def _get_dataframe(db, coll_name, force_update):
-  global df_cache
+  global df_cache, selected_columns_regex
 
   # Dataframe is already present in the cache (force updating is off)
   if not force_update and coll_name in df_cache:
@@ -75,7 +75,7 @@ def _get_dataframe(db, coll_name, force_update):
   data = {}
   for doc in coll.find():
     for column, value in doc.items():
-      if re.search(selected_column_regex, column):
+      if re.search(selected_columns_regex, column):
         if column in data:
           data[column].append(value)
         else:
