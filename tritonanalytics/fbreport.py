@@ -32,7 +32,7 @@ selected_columns = [
   'Lifetime Post Total Reach',
   'Lifetime Engaged Users',
   'Lifetime Post Consumers',
-  'Lifetime Post Consumptions'
+  'Lifetime Post Consumptions',
   'Daily City: People Talking About This - '
 ]
 selected_columns_regex = None
