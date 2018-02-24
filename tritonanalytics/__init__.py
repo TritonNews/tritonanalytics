@@ -37,7 +37,7 @@ def update_analytics(db):
 
 # Start thread that updates dataframes
 Thread(target=update_analytics, args=(db,)).start()
-logging.info("Dataframe update thread started.)
+logging.info("Dataframe update thread started.")
 
 # Generate analytic HTML files
 generate_page_analytics(db, PAGE_ANALYTICS_OUTFILE)
