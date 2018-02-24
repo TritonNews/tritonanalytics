@@ -16,9 +16,10 @@ import os
 import math
 import logging
 import time
+import re
 
 # Only copy over certain columns from database to dataframe
-selected_columns = {
+selected_columns = [
   'Date',
   'Daily Page Engaged Users',
   'Daily Total Impressions',
@@ -32,8 +33,9 @@ selected_columns = {
   'Lifetime Engaged Users',
   'Lifetime Post Consumers',
   'Lifetime Post Consumptions'
-}
-selected_columns_updated = False
+  'Daily City: People Talking About This - '
+]
+selected_column_regex = None
 
 # Cache used for storing dataframes
 df_cache = {}
@@ -44,9 +46,8 @@ def generate_dataframes(db, force_update=False):
   global selected_columns, selected_columns_updated
 
   # Get a list of cities and add them to our selected columns
-  if not selected_columns_updated:
-    selected_columns.update(_get_list_of_cities(db))
-    selected_columns_updated = True
+  if not selected_column_regex:
+    selected_column_regex = '|'.join(selected_columns)
 
   # Retrieve our page analytics dataframe
   df_page = _get_dataframe(db, 'fbpages', force_update)
@@ -57,21 +58,6 @@ def generate_dataframes(db, force_update=False):
   df_posts = _get_dataframe(db, 'fbposts', force_update)
 
   return df_page, df_posts
-
-
-
-def _get_list_of_cities(db):
-  # Used to get a list of cities appearing in every document, since our data may be incomplete
-  # TODO: replace with a more elegant solution
-  cities = defaultdict(int)
-  num_docs = 0
-  for doc in db.fbpages.find():
-    for column, value in doc.items():
-      if 'Daily City: People Talking About This - ' in column:
-        cities[column] += 1
-    num_docs += 1
-  # A city appearing in every document must have a count equal to the number of documents
-  return {city for city, appearances in cities.items() if appearances == num_docs}
 
 
 
@@ -89,7 +75,7 @@ def _get_dataframe(db, coll_name, force_update):
   data = {}
   for doc in coll.find():
     for column, value in doc.items():
-      if column in selected_columns:
+      if re.search(selected_column_regex, column):
         if column in data:
           data[column].append(value)
         else:
